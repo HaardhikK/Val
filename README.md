@@ -1,6 +1,6 @@
 # Val
 
-your own little companion robot, living inside an old Android phone. no wifi, no SIM, no cloud. nothing leaves the phone (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧
+your own little companion robot, living inside an old Android phone. no wifi, no SIM, no cloud. nothing leaves the phone (ﾉ◕ヮ◕)ﾉ*
 
 Val is a tiny pink 3D robot that *is* the whole phone: you unlock it and Val is just there, floating on a true-black screen. tilt the phone and Val slides, hold the button and talk to it, point the camera at something and ask "what is this?". every model runs on the phone itself, in airplane mode, and the small models can be wrong, so treat Val as a friend, not an oracle.
 
