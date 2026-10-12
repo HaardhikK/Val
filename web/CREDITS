@@ -1,0 +1,33 @@
+Third-party material bundled into the Charm app
+
+RobotExpressive.glb
+  Model by Tomás Laulhé (https://www.patreon.com/quaternius), modifications by Don McCurdy.
+  Source: three.js examples (examples/models/gltf/RobotExpressive), r170.
+  Licence: CC0 1.0 (public domain dedication), https://creativecommons.org/publicdomain/zero/1.0/
+
+three.js 0.170.0
+  Copyright © 2010-2024 three.js authors. MIT licence, https://github.com/mrdoob/three.js/blob/r170/LICENSE
+  The full notice ships next to the bundle as charm.js.LEGAL.txt.
+
+Offline map (map/)
+  Map data © OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright
+    (tiles: Protomaps basemap build; places and footpaths: derived by scripts/build-map-data.py).
+  MapLibre GL JS 5.24.0: BSD-3-Clause, https://github.com/maplibre/maplibre-gl-js/blob/v5.24.0/LICENSE.txt
+    (notice also in map/map.js.LEGAL.txt).
+  PMTiles 4.5.0: BSD-3-Clause, https://github.com/protomaps/PMTiles
+  @protomaps/basemaps 5.7.2 (style and sprites): BSD-3-Clause, https://github.com/protomaps/basemaps
+  MiniSearch 7.2.0: MIT, https://github.com/lucaong/minisearch
+  Noto Sans glyphs: SIL Open Font License 1.1, https://github.com/notofonts/latin-greek-cyrillic
+  Tram and bus timetable (map/derived/transit.bin, transit-stops.json): DELFI e.V. via GTFS.de
+    (https://gtfs.de), VVO-area cut by https://github.com/kiliankoe/vvo; CC BY 4.0,
+    https://creativecommons.org/licenses/by/4.0/ ; converted by scripts/build-transit.py.
+
+On-device runtimes (in the app package or pushed with the model files)
+  sherpa-onnx 1.13.8 (speech-to-text and Kitten voice runtime): Apache-2.0,
+    https://github.com/k2-fsa/sherpa-onnx
+  llama.cpp b11541 (local server for the vision/chat model): MIT, https://github.com/ggml-org/llama.cpp
+  Needle 3 (Cactus Compute), runtime and model weights (local command server): Apache-2.0,
+    https://huggingface.co/Cactus-Compute/needle3
+    Our fine-tuned needle3-val.cact is a derivative; it is not in the repo (scripts/train-needle.sh builds it).
+  LFM2.5-VL-450M (Liquid AI, vision and chat): LFM Open License v1.0, free for personal, research and
+    small-business use; check Liquid AI's terms for larger commercial use.

@@ -1,0 +1,86 @@
+# Secrets and credentials: never commit
+.env
+.env.*
+.envrc
+*.pem
+*.key
+*.p12
+*credentials*.json
+*service-account*.json
+secrets.json
+secrets.yaml
+secrets.yml
+secrets.toml
+*.secrets
+.mcp.json
+id_rsa*
+id_ed25519*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python (scripts use a local .venv)
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node
+node_modules/
+/dist/
+/out/
+coverage/
+*.log
+
+# In-repo tool caches (toolchain, models, downloads)
+.cache/
+# .cache as a symlink is a file, which .cache/ does not match
+/.cache
+
+# Raw data, model weights and media: commit fetch scripts only
+data/raw/
+*.pt
+*.pth
+*.onnx
+*.engine
+*.ckpt
+*.safetensors
+*.bin
+*.tflite
+*.mp4
+*.mov
+*.avi
+*.mp3
+*.wav
+*.m4a
+*.jpg
+*.jpeg
+*.heic
+*.zip
+*.parquet
+
+# Editors and tools
+.vscode/
+.idea/
+*.swp
+*.local.*
+
+# Android (android/): build output, local config and signing keys (keystores are secrets)
+.gradle/
+android/**/build/
+android/build/
+android/local.properties
+android/.kotlin/
+android/captures/
+android/app/.cxx/
+android/app/src/main/assets/charm/
+web/.test-build/
+*.apk
+*.aab
+*.jks
+*.keystore

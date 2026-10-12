@@ -1,0 +1,24 @@
+{
+  "name": "charm-web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The Charm 3D character page, bundled into the Android app's assets.",
+  "license": "MIT",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node build.mjs --tests && node --test '.test-build/*.test.mjs'"
+  },
+  "dependencies": {
+    "maplibre-gl": "5.24.0",
+    "minisearch": "7.2.0",
+    "pmtiles": "4.5.0",
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "@protomaps/basemaps": "5.7.2",
+    "@types/three": "0.170.0",
+    "esbuild": "0.25.0",
+    "typescript": "5.7.2"
+  }
+}

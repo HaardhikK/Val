@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Bundled files only: nothing (not even a WebSocket) may leave the phone. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: mediastream:; connect-src 'self' blob: data:; worker-src 'self' blob:; font-src 'self' data:" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>Charm</title>
+    <style>
+      :root {
+        /* Design tokens: one retro dark theme everywhere (black, cream text, one pink accent, amber = live). */
+        --bg: #000;
+        --pink: #ffb3c8;
+        --cream: #f4ead5;
+        --amber: #ffb000;
+        --text-2: rgba(244, 234, 213, 0.72);
+        --text-3: rgba(244, 234, 213, 0.45);
+        --err: #ff7a8a;
+        --mono: ui-monospace, "Roboto Mono", "Droid Sans Mono", monospace;
+        --out: cubic-bezier(0.2, 0.8, 0.2, 1);
+        --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        background: #000; /* true black: on this LCD it merges with the bezels, so the character floats in the glass */
+        font-family: var(--mono);
+      }
+      canvas {
+        display: block;
+      }
+      #fps,
+      #status {
+        position: fixed;
+        left: 10px;
+        font: 11px/1.3 var(--mono);
+        color: var(--text-3);
+        pointer-events: none;
+      }
+      #fps {
+        top: 10px;
+      }
+      #status {
+        top: 26px;
+      }
+      #message {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        bottom: 18%;
+        text-align: center;
+        font: 500 14px/1.4 var(--mono);
+        letter-spacing: 0.04em;
+        color: var(--cream);
+        transition: opacity 0.6s;
+        pointer-events: none;
+      }
+      /* Shared retro pieces: tiny uppercase labels, a 2px cream frame with square corners. */
+      .tag {
+        font: 600 10px/1 var(--mono);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      /* Transcript card: what you said (one dim line) and what Val says (typed out). */
+      #bubble {
+        position: fixed;
+        z-index: 50; /* above the map (10), the camera (30) and the robot bubble (40): talking works everywhere */
+        left: 16px;
+        right: 16px;
+        /* --hud-top: the map docks the card below its search bar and GPS strip (main.ts sets body.map-open). */
+        top: var(--hud-top, calc(env(safe-area-inset-top, 0px) + 12%));
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        max-height: 38%; /* a long reply scrolls inside the card and never reaches Val's head */
+        padding: 12px 14px 14px;
+        background: var(--bg);
+        border: 2px solid var(--cream);
+        color: var(--cream);
+        opacity: 0;
+        transform: translateY(6px);
+        transition: opacity 180ms var(--out), transform 180ms var(--out);
+        pointer-events: none;
+      }
+      body.map-open {
+        --hud-top: calc(env(safe-area-inset-top, 0px) + 116px); /* 16 + 48 search + 8 + 36 GPS strip + 8 */
+      }
+      /* With the map up, the voice strip sits just under the search bar (over the GPS strip line), never over the
+         map's bottom card and its WALK / TRAM buttons. */
+      body.map-open #ears {
+        top: calc(env(safe-area-inset-top, 0px) + 72px);
+        bottom: auto;
+      }
+      #bubble.show {
+        opacity: 1;
+        transform: none;
+      }
+      /* The map's search results are up: the voice card steps aside (view.ts sets body.map-searching). */
+      body.map-searching #bubble {
+        visibility: hidden;
+      }
+      /* A journey is on the map: the voice card docks just above its card and the locate button, so the route in the
+         middle stays visible (view.ts sets body.map-trip and --map-card-h). */
+      body.map-open.map-trip #bubble {
+        top: auto;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 32px + var(--map-card-h, 0px) + 64px);
+        max-height: min(22%, 104px); /* YOU on one line, three lines of reply that scroll inside (hud.ts): the journey stays in view */
+        padding: 8px 12px 10px;
+      }
+      body.map-open.map-trip #heard {
+        -webkit-line-clamp: 1;
+        margin-bottom: 4px;
+      }
+      body.map-open.map-trip #said {
+        font-size: 14px;
+      }
+      #heard {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+        margin-bottom: 10px;
+        color: var(--text-3);
+        font: 400 12px/1.4 var(--mono);
+      }
+      #heard[hidden] {
+        display: none;
+      }
+      #said {
+        display: block;
+        flex: 0 1 auto;
+        min-height: 0;
+        overflow: hidden; /* scrolled from code as the reply types (hud.ts) */
+        font: 500 17px/1.4 var(--mono);
+        word-wrap: break-word;
+      }
+      #bubble.long #said {
+        font-size: 15px;
+      }
+      #bubble .tag {
+        margin-right: 6px;
+        font-size: 10px;
+      }
+      #said .tag {
+        color: var(--pink);
+      }
+      #said .fact {
+        color: var(--cream);
+        opacity: 0.45;
+      }
+      #said .fact[hidden],
+      #said .err[hidden] {
+        display: none;
+      }
+      #said .err {
+        color: var(--err);
+      }
+      .cursor {
+        margin-left: 1px;
+        animation: blink 1s steps(1) infinite;
+      }
+      .cursor[hidden] {
+        display: none;
+      }
+      @keyframes blink {
+        50% { opacity: 0; }
+      }
+      /* Tape-recorder strip: REC + level meter while listening, a scanning dot while thinking, SPEAKING while talking. */
+      #ears {
+        position: fixed;
+        z-index: 50;
+        left: 50%;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 7%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        box-sizing: border-box;
+        width: 236px; /* the same width as the metal meter above it (metal.ts) */
+        height: 40px;
+        padding: 0 12px;
+        border: 2px solid var(--cream);
+        background: var(--bg);
+        color: var(--cream);
+        opacity: 0;
+        transform: translate(-50%, 6px);
+        transition: opacity 180ms var(--out), transform 180ms var(--out);
+        pointer-events: none;
+      }
+      #ears.on {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      #ears .rec {
+        color: var(--amber);
+        animation: blink 1s steps(1) infinite;
+      }
+      #ears .meter {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        height: 22px;
+      }
+      #ears .meter i {
+        width: 2px;
+        height: 22px;
+        background: var(--cream);
+        transform: scaleY(0.12);
+        transition: transform 80ms linear;
+      }
+      #ears.listening .meter i {
+        background: var(--amber);
+      }
+      #ears.thinking .meter i {
+        transform: scaleY(0.18);
+        opacity: 0.2;
+        transition: none;
+        animation: scan 1.2s steps(1) infinite;
+      }
+      @keyframes scan {
+        0%, 8.3% { opacity: 1; }
+        8.4%, 100% { opacity: 0.2; }
+      }
+      #ears .rec,
+      #ears .meter {
+        display: none;
+      }
+      #ears.listening .rec {
+        display: block;
+      }
+      #ears.listening .meter,
+      #ears.thinking .meter {
+        display: flex;
+      }
+      #ears .tag {
+        white-space: nowrap;
+      }
+      /* The REC tag has a fixed width (it blinks by opacity), so the meter beside it never shifts. */
+      #ears.listening .rec {
+        width: 7ch;
+        flex: none;
+      }
+      #ears.listening .label {
+        display: none; /* ● REC and the bars say it */
+      }
+      /* Voice off: a [TEXT ONLY] tag in the strip; while idle, a small transparent tag in the bottom-left corner,
+         hidden whenever a feature or a card is up (main.ts sets body.overlay and body.card-up). */
+      #ears .mute {
+        display: none;
+        color: var(--amber);
+      }
+      #ears.muted .mute {
+        display: block;
+      }
+      #ears.muted:not(.on) {
+        left: 12px;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+        width: auto;
+        height: auto;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        opacity: 0.5;
+        transform: none;
+      }
+      #ears.muted:not(.on) .label {
+        display: none;
+      }
+      body.overlay #ears.muted:not(.on),
+      body.card-up #ears.muted:not(.on),
+      #bubble.show ~ #ears.muted:not(.on) {
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="fps"></div>
+    <div id="status"></div>
+    <div id="message"></div>
+    <div id="bubble" role="status">
+      <div id="heard" hidden><span class="tag">You ▸</span><span id="heard-text"></span></div>
+      <div id="said"><span class="tag">Val ▸</span><span class="tag fact" hidden>FACT</span><span class="tag err" hidden>[Oops]</span><span id="said-text"></span><span class="cursor" hidden>█</span></div>
+    </div>
+    <div id="ears"><span class="tag rec">● Rec</span><span class="tag label"></span><span class="meter"></span><span class="tag mute">[Text only]</span></div>
+    <script src="charm.js"></script>
+  </body>
+</html>
